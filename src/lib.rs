@@ -1,11 +1,20 @@
-mod owned_chat_command;
-
-use self::owned_chat_command::OwnedChatCommand;
-use classicube::{Chat_AddOf, Commands_Register, IGameComponent, MsgType, MsgType_MSG_TYPE_NORMAL};
+use classicube::{
+  Chat_AddOf, Commands_Register, IGameComponent, MsgType, MsgType_MSG_TYPE_NORMAL, OwnedChatCommand,
+};
 use rand::Rng;
 use std::{cell::RefCell, convert::TryInto, os::raw::c_int, ptr};
 
-const ROLL_COMMAND_HELP: &str = "&a/client roll [min] [max] &e(Default 1 to 6)";
+macro_rules! default_max {
+  () => {
+    100
+  };
+}
+
+const ROLL_COMMAND_HELP: &str = concat!(
+  "&a/client roll [min] [max] &e(Default 1 to ",
+  default_max!(),
+  ")"
+);
 
 thread_local! {
   static COMMAND: RefCell<OwnedChatCommand> = RefCell::new(OwnedChatCommand::new(
@@ -45,7 +54,7 @@ fn command_callback(args: Vec<String>) {
 
     [max] => (1, check_err!(max.parse())),
 
-    _ => (1, 6),
+    _ => (1, default_max!()),
   };
 
   if min > max {
@@ -54,7 +63,7 @@ fn command_callback(args: Vec<String>) {
 
   let result = rng.gen_range(min, max + 1);
 
-  chat_add(format!("({}|{}) = {}", min, max, result));
+  chat_add(format!("&f(&e{}&f|&e{}&f) = &a{}", min, max, result));
 }
 
 fn chat_add_of<S: Into<Vec<u8>>>(s: S, msg_type: MsgType) {
