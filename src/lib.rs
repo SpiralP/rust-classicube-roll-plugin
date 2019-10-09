@@ -1,8 +1,6 @@
-use classicube::{
-  Chat_AddOf, Commands_Register, IGameComponent, MsgType, MsgType_MSG_TYPE_NORMAL, OwnedChatCommand,
-};
-use rand::Rng;
-use std::{cell::RefCell, convert::TryInto, os::raw::c_int, ptr};
+use classicube_sys::{Chat_Add, Commands_Register, IGameComponent, OwnedChatCommand};
+use rand::{thread_rng, Rng};
+use std::{cell::RefCell, convert::TryInto, mem, os::raw::c_int, ptr, slice};
 
 macro_rules! default_max {
   () => {
@@ -25,8 +23,8 @@ thread_local! {
   ));
 }
 
-unsafe extern "C" fn c_command_callback(args: *const classicube::String, args_count: c_int) {
-  let args = std::slice::from_raw_parts(args, args_count.try_into().unwrap());
+unsafe extern "C" fn c_command_callback(args: *const classicube_sys::String, args_count: c_int) {
+  let args = slice::from_raw_parts(args, args_count.try_into().unwrap());
   let args: Vec<String> = args.iter().map(|cc_string| cc_string.to_string()).collect();
 
   command_callback(args);
@@ -37,7 +35,7 @@ macro_rules! check_err {
     match $x {
       Ok(v) => v,
       Err(e) => {
-        chat_add(format!("{}", e));
+        chat_add(format!("Error: &c{}", e));
         return;
       }
     }
@@ -46,8 +44,6 @@ macro_rules! check_err {
 
 fn command_callback(args: Vec<String>) {
   let args: Vec<&str> = args.iter().map(|s| s.as_ref()).collect();
-
-  let mut rng = rand::thread_rng();
 
   let (mut min, mut max): (i64, i64) = match args.as_slice() {
     [min, max] => (check_err!(min.parse()), check_err!(max.parse())),
@@ -58,37 +54,20 @@ fn command_callback(args: Vec<String>) {
   };
 
   if min > max {
-    std::mem::swap(&mut min, &mut max);
+    mem::swap(&mut min, &mut max);
   }
 
+  let mut rng = thread_rng();
   let result = rng.gen_range(min, max + 1);
 
   chat_add(format!("&f(&e{}&f|&e{}&f) = &a{}", min, max, result));
 }
 
-fn chat_add_of<S: Into<Vec<u8>>>(s: S, msg_type: MsgType) {
-  let s = s.into();
-
-  let length = s.len() as u16;
-  let capacity = s.len() as u16;
-
-  let c_str = std::ffi::CString::new(s).unwrap();
-
-  let buffer = c_str.as_ptr() as *mut i8;
-
-  let cc_str = classicube::String {
-    buffer,
-    length,
-    capacity,
-  };
-
+fn chat_add(text: String) {
   unsafe {
-    Chat_AddOf(&cc_str, msg_type.try_into().unwrap());
+    let cc_string = classicube_sys::String::from_string(text);
+    Chat_Add(&cc_string);
   }
-}
-
-fn chat_add<S: Into<Vec<u8>>>(s: S) {
-  chat_add_of(s, MsgType_MSG_TYPE_NORMAL)
 }
 
 extern "C" fn init() {
