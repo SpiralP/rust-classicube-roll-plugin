@@ -1,4 +1,6 @@
-use classicube_sys::{Chat_Add, Commands_Register, IGameComponent, OwnedChatCommand};
+use classicube_sys::{
+  Chat_Add, Commands_Register, IGameComponent, OwnedChatCommand, OwnedString, Server,
+};
 use rand::{thread_rng, Rng};
 use std::{cell::RefCell, convert::TryInto, mem, os::raw::c_int, ptr, slice};
 
@@ -64,9 +66,10 @@ fn command_callback(args: Vec<String>) {
 }
 
 fn chat_add(text: String) {
+  let owned_string = OwnedString::new(text);
+
   unsafe {
-    let cc_string = classicube_sys::String::from_string(text);
-    Chat_Add(&cc_string);
+    Chat_Add(owned_string.as_cc_string());
   }
 }
 
