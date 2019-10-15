@@ -17,13 +17,19 @@ jobs:
         toolchain: nightly
         override: true
 
-    - name: Run cargo build
+    - name: Test
       uses: actions-rs/cargo@v1
+      with:
+        command: test
+
+    - name: Build Release
+      uses: actions-rs/cargo@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         command: build
         args: --release
 
-    - name: Release
+    - name: Upload Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
@@ -36,9 +42,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-      
-#    - name: Install deps
-#      run: sudo apt-get -y update && sudo apt-get -y install mesa-common-dev libopenal-dev libcurl4-openssl-dev libgl1-mesa-dev
 
     - name: Install nightly
       uses: actions-rs/toolchain@v1
@@ -46,17 +49,22 @@ jobs:
         toolchain: nightly
         override: true
 
-    - name: Run cargo build
+    - name: Test
       uses: actions-rs/cargo@v1
+      with:
+        command: test
+
+    - name: Build Release
+      uses: actions-rs/cargo@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         command: build
         args: --release
 
-    - name: Release
+    - name: Upload Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: target/release/rust_classicube_roll_plugin.dll
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
