@@ -1,6 +1,4 @@
-use classicube_sys::{
-  Chat_Add, Commands_Register, IGameComponent, OwnedChatCommand, OwnedString, Server,
-};
+use classicube_sys::{Chat_Add, Commands_Register, IGameComponent, OwnedChatCommand, OwnedString};
 use rand::{thread_rng, Rng};
 use std::{cell::RefCell, convert::TryInto, mem, os::raw::c_int, ptr, slice};
 
