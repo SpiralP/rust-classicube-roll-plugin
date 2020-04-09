@@ -1,6 +1,6 @@
-use classicube_sys::{Chat_Add, Commands_Register, IGameComponent, OwnedChatCommand, OwnedString};
+use classicube_sys::{Chat_Add, IGameComponent, OwnedChatCommand, OwnedString};
 use rand::{thread_rng, Rng};
-use std::{cell::RefCell, convert::TryInto, mem, os::raw::c_int, ptr, slice};
+use std::{cell::RefCell, convert::TryInto, mem, os::raw::c_int, pin::Pin, ptr, slice};
 
 macro_rules! default_max {
   () => {
@@ -15,7 +15,7 @@ const ROLL_COMMAND_HELP: &str = concat!(
 );
 
 thread_local! {
-  static COMMAND: RefCell<OwnedChatCommand> = RefCell::new(OwnedChatCommand::new(
+  static COMMAND: RefCell<Pin<Box<OwnedChatCommand>>> = RefCell::new(OwnedChatCommand::new(
     "Roll",
     c_command_callback,
     false,
@@ -72,8 +72,8 @@ fn chat_add(text: String) {
 }
 
 extern "C" fn init() {
-  COMMAND.with(|owned_command| unsafe {
-    Commands_Register(&mut owned_command.borrow_mut().command);
+  COMMAND.with(|owned_command| {
+    owned_command.borrow_mut().as_mut().register();
   });
 }
 
@@ -82,16 +82,16 @@ pub static Plugin_ApiVersion: c_int = 1;
 
 #[no_mangle]
 pub static mut Plugin_Component: IGameComponent = IGameComponent {
-  /* Called when the game is being loaded. */
+  // Called when the game is being loaded.
   Init: Some(init),
-  /* Called when the component is being freed. (e.g. due to game being closed) */
+  // Called when the component is being freed. (e.g. due to game being closed)
   Free: None,
-  /* Called to reset the component's state. (e.g. reconnecting to server) */
+  // Called to reset the component's state. (e.g. reconnecting to server)
   Reset: None,
-  /* Called to update the component's state when the user begins loading a new map. */
+  // Called to update the component's state when the user begins loading a new map.
   OnNewMap: None,
-  /* Called to update the component's state when the user has finished loading a new map. */
+  // Called to update the component's state when the user has finished loading a new map.
   OnNewMapLoaded: None,
-  /* Next component in linked list of components. */
+  // Next component in linked list of components.
   next: ptr::null_mut(),
 };
