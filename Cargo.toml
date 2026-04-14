@@ -9,4 +9,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 classicube-sys = { git = "https://github.com/SpiralP/rust-classicube-sys.git" }
-rand = "0.7.3"
+rand = "0.9.3"
